@@ -103,6 +103,25 @@ public function bootstrap()
     6. RegisterProviders  注册Providers 
     7. BootProviders      启动Providers
         
+```
+namespace Illuminate\Foundation;
+
+class Application extends Container implements ...
+{
+    public function bootstrapWith(array $bootstrappers)
+    {
+        $this->hasBeenBootstrapped = true;
+
+        foreach ($bootstrappers as $bootstrapper) {
+            $this['events']->fire('bootstrapping: '.$bootstrapper, [$this]);
+
+            $this->make($bootstrapper)->bootstrap($this);
+
+            $this['events']->fire('bootstrapped: '.$bootstrapper, [$this]);
+        }
+    }
+}
+```
     
  启动应用程序的最后两部就是注册服务提供这和启动提供者，如果对前面几个阶段具体时怎么实现的可以参考[这篇文章](https://segmentfault.com/a/1190000006946685#articleHeader5)。在这里我们主要关注服务提供器的注册和启动。
  
@@ -269,12 +288,12 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     	}
     
         public function resolveProvider($provider)
-    	{
+        {
             eturn new $provider($this);
         }
     
         protected function markAsRegistered($provider)
-    	{
+        {
             //这个属性在稍后booting服务时会用到
             $this->serviceProviders[] = $provider;
             $this->loadedProviders[get_class($provider)] = true;
@@ -418,7 +437,7 @@ class BootProviders
 }
 class Application extends Container implements ApplicationContract, HttpKernelInterface
 {
-	public function boot()
+    public function boot()
     {
         if ($this->booted) {
             return;
@@ -442,12 +461,12 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
 
 引导应用Application的serviceProviders属性中记录的所有服务提供器，就是依次调用这些服务提供器的boot方法，引导完成后`$this->booted = true` 就代表应用`Application`正式启动了，可以开始处理请求了。这里额外说一句，之所以等到所有服务提供器都注册完后再来进行引导是因为有可能在一个服务提供器的boot方法里调用了其他服务提供器注册的服务，所以需要等到所有即时注册的服务提供器都register完成后再来boot。
 
-上一篇: [服务容器](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/IocContainer.md)
+上一篇: [服务容器](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/IocContainer.md)
 
-下一篇: [Facades](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/Facades.md)
+下一篇: [外观模式](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/FacadePattern.md)
 
 
 
-  [1]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/IocContainer.md
-  [2]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/IocContainer.md
-  [3]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/IocContainer.md
+  [1]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/IocContainer.md
+  [2]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/IocContainer.md
+  [3]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/IocContainer.md

@@ -21,7 +21,7 @@ Laravel的核心是IocContainer, 文档中称其为“服务容器”，服务�
     $api = new HelpSpot\API(new HttpClient);
     $this->app->instance('HelpSpot\Api', $api);
     
-会把对象注册到服务容器的$instnces属性里
+会把对象注册到服务容器的$instances属性里
   
     ［
          'HelpSpot\Api' => $api//$api是API类的对象，这里简写了
@@ -54,8 +54,8 @@ Laravel的核心是IocContainer, 文档中称其为“服务容器”，服务�
         
         $concrete = $this->normalize($concrete);
         //如果$abstract为数组类似['Illuminate/ServiceName' => 'service_alias']
-		//抽取别名"service_alias"并且注册到$aliases[]中
-		//注意：数组绑定别名的方式在5.4中被移除，别名绑定请使用下面的alias方法
+        //抽取别名"service_alias"并且注册到$aliases[]中
+        //注意：数组绑定别名的方式在5.4中被移除，别名绑定请使用下面的alias方法
         if (is_array($abstract)) {
             list($abstract, $alias) = $this->extractAlias($abstract);
 
@@ -67,7 +67,7 @@ Laravel的核心是IocContainer, 文档中称其为“服务容器”，服务�
         if (is_null($concrete)) {
             $concrete = $abstract;
         }
-		//如果只提供$abstract，则在这里为其生成concrete闭包
+        //如果只提供$abstract，则在这里为其生成concrete闭包
         if (! $concrete instanceof Closure) {
             $concrete = $this->getClosure($abstract, $concrete);
         }
@@ -145,8 +145,8 @@ make: 从服务容器中解析出服务对象，该方法接收你想要解析�
      */
     public function make($abstract, array $parameters = [])
     {
-    	//getAlias方法会假定$abstract是绑定的别名，从$aliases找到映射的真实类型名
-    	//如果没有映射则$abstract即为真实类型名，将$abstract原样返回
+        // getAlias方法会假定$abstract是绑定的别名，从$aliases找到映射的真实类型名
+        // 如果没有映射则$abstract即为真实类型名，将$abstract原样返回
         $abstract = $this->getAlias($this->normalize($abstract));
 
         // 如果服务是通过instance()方式绑定的，就直接解析返回绑定的service
@@ -160,8 +160,8 @@ make: 从服务容器中解析出服务对象，该方法接收你想要解析�
         if ($this->isBuildable($concrete, $abstract)) {
             $object = $this->build($concrete, $parameters);
         } else {
-            //如果时接口实现这种绑定方式，通过接口拿到实现后需要再make一次才能
-            //满足isBuildable的条件 ($abstract === $concrete)
+            // 如果时接口实现这种绑定方式，通过接口拿到实现后需要再make一次才能
+            // 满足isBuildable的条件 ($abstract === $concrete)
             $object = $this->make($concrete, $parameters);
         }
 
@@ -169,8 +169,8 @@ make: 从服务容器中解析出服务对象，该方法接收你想要解析�
             $object = $extender($object, $this);
         }
 
-		//如果服务是以singleton方式注册进来的则，把构建好的服务对象放到$instances里，
-		//避免下次使用时重新构建
+        // 如果服务是以singleton方式注册进来的则，把构建好的服务对象放到$instances里，
+        // 避免下次使用时重新构建
         if ($this->isShared($abstract)) {
             $this->instances[$abstract] = $object;
         }
@@ -258,7 +258,7 @@ make: 从服务容器中解析出服务对象，该方法接收你想要解析�
         return $reflector->newInstanceArgs($instances);
     }
     
-    //获取依赖
+    // 获取依赖
     protected function getDependencies(array $parameters, array $primitives = [])
     {
         $dependencies = [];
@@ -266,7 +266,7 @@ make: 从服务容器中解析出服务对象，该方法接收你想要解析�
         foreach ($parameters as $parameter) {
             $dependency = $parameter->getClass();
 
-            // 某一依赖值在$primitives中(即build方法的$parameters参数)已提供
+            // 某一依赖值在$primitives中(如：app()->make(ApiService::class, ['clientId' => 'id'])调用时$primitives里会包含ApiService类构造方法中参数$clientId的参数值)已提供
             // $parameter->name返回参数名
             if (array_key_exists($parameter->name, $primitives)) {
                 $dependencies[] = $primitives[$parameter->name];
@@ -283,7 +283,7 @@ make: 从服务容器中解析出服务对象，该方法接收你想要解析�
         return $dependencies;
     }
     
-    //解析出依赖类的对象
+    // 解析出依赖类的对象
     protected function resolveClass(ReflectionParameter $parameter)
     {
         try {
@@ -310,5 +310,5 @@ make: 从服务容器中解析出服务对象，该方法接收你想要解析�
 下一篇: [服务提供器][3]
 
 
-  [1]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/reflection.md
-  [3]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/ServiceProvider.md
+  [1]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/reflection.md
+  [3]: https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/ServiceProvider.md

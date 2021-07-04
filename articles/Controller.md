@@ -11,7 +11,7 @@ protected $middleware = [
     \App\Http\Middleware\TrustProxies::class,
 ];
 ```
-然后Http Kernel会通过`dispatchToRoute`将请求对象移交给路由对象进行处理，路由对象会收集路由上绑定的中间件然后还是像上面Http Kernel里一样用一个Pipeline管道对象将请求传送通过这些路由上绑定的这些中间键，到达目的地后会执行路由绑定的控制器方法然后把执行结果封装成响应对象，响应对象一次通过后置中间件最后返回给客户端。
+然后Http Kernel会通过`dispatchToRoute`将请求对象移交给路由对象进行处理，路由对象会收集路由上绑定的中间件然后还是像上面Http Kernel里一样用一个Pipeline管道对象将请求传送通过这些路由上绑定的这些中间键，到达目的地后会执行路由绑定的控制器方法然后把执行结果封装成响应对象，响应对象依次通过后置中间件最后返回给客户端。
 
 下面是刚才说的这些步骤对应的核心代码：
 
@@ -288,6 +288,6 @@ trait RouteDependencyResolverTrait
 执行完拿到结果后，按照上面`runRouteWithinStack`里的逻辑，结果会被转换成响应对象。然后响应对象会依次经过之前应用过的所有中间件的后置操作，最后返回给客户端。
 
 
-上一篇: [中间件](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/Middleware.md)
+上一篇: [中间件](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/Middleware.md)
 
-下一篇: [Request](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/Request.md)
+下一篇: [Request](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/Request.md)

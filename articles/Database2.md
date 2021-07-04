@@ -61,7 +61,7 @@ class Connection implements ConnectionInterface
 }
 ```
 
-通过上面的代码段可以看到Connection类的构造方法里出了注入了Connector数据库连接器(就是参数里的`$pdo`)，还加载了两个重要的组件`Illuminate\Database\Query\Grammars\Grammar`: ***SQL语法编译器*** 和 `Illuminate\Database\Query\Processors\Processor`: ***SQL结果处理器***。 我们看一下Connection的table方法，它返回了一个QueryBuilder实例, 其在实例化的时候Connection实例、Grammer实例和Processor实例会被作为参数传人QueryBuilder的构造方法中。 
+通过上面的代码段可以看到Connection类的构造方法里除了注入了包装着Connector数据库连接器的闭包外 (就是参数里的`$pdo`, 他是一个闭包，具体值在下面和上篇文章中都有提到) 还加载了两个重要的组件`Illuminate\Database\Query\Grammars\Grammar`: ***SQL语法编译器*** 和 `Illuminate\Database\Query\Processors\Processor`: ***SQL结果处理器***。 我们看一下Connection的table方法，它返回了一个QueryBuilder实例, 其在实例化的时候Connection实例、Grammer实例和Processor实例会被作为参数传人QueryBuilder的构造方法中。 
 
 接下我们到QueryBuilder类文件`\Illuminate\Database\Query\Builder.php`里看看它里面的源码
 
@@ -102,7 +102,7 @@ class Builder
             return $this->addArrayOfWheres($column, $boolean);
         }
 
-		//当这样使用where('name', 'James')时，会在这里把$operator赋值为"="
+        // 当这样使用where('name', 'James')时，会在这里把$operator赋值为"="
         list($value, $operator) = $this->prepareValueAndOperator(
             $value, $operator, func_num_args() == 2 // func_num_args()为3，3个参数
         );
@@ -182,7 +182,7 @@ class Builder
         return $this;
     }
     
-所以上面DB::table('users')->where('name', '=', 'James')执行后QueryBuilder对象里的几个属性分别有了一下变化：
+所以上面`DB::table('users')->where('name', '=', 'James')`执行后QueryBuilder对象里的几个属性分别有了一下变化：
 
 ```
 public $from = 'users';
@@ -203,7 +203,7 @@ public $bindings = [
 
 通过bindings属性里数组的key大家应该都能猜到如果执行select、orderBy等方法，那么这些方法就会把要绑定的值分别append到select和order这些数组里了，这些代码我就不贴在这里了，大家看源码的时候可以自己去看一下，下面我们主要来看一下get方法里都做了什么。
 
-	//class \Illuminate\Database\Query\Builder
+    //class \Illuminate\Database\Query\Builder
     public function get($columns = ['*'])
     {
         $original = $this->columns;
@@ -257,11 +257,11 @@ public $bindings = [
     {
 		
         $original = $query->columns;
-		//如果没有QueryBuilder里没制定查询字段，那么默认将*设置到查询字段的位置
+        //如果没有QueryBuilder里没制定查询字段，那么默认将*设置到查询字段的位置
         if (is_null($query->columns)) {
             $query->columns = ['*'];
         }
-		//遍历查询的每一部份，如果存在就执行对应的编译器来编译出那部份的SQL语句
+        //遍历查询的每一部份，如果存在就执行对应的编译器来编译出那部份的SQL语句
         $sql = trim($this->concatenate(
             $this->compileComponents($query))
         );
@@ -281,7 +281,7 @@ public $bindings = [
         $sql = [];
 
         foreach ($this->selectComponents as $component) {
-			//遍历查询的每一部份，如果存在就执行对应的编译器来编译出那部份的SQL语句
+            //遍历查询的每一部份，如果存在就执行对应的编译器来编译出那部份的SQL语句
             if (! is_null($query->$component)) {
                 $method = 'compile'.ucfirst($component);
 
@@ -357,7 +357,7 @@ compileColumns执行完后compileComponents里的变量$sql的值会变成`['col
         if (is_null($query->wheres)) {
             return '';
         }
-		//每一种where查询都有它自己的编译器函数来创建SQL语句，这帮助保持里代码的整洁和可维护性
+        //每一种where查询都有它自己的编译器函数来创建SQL语句，这帮助保持里代码的整洁和可维护性
         if (count($sql = $this->compileWheresToArray($query)) > 0) {
             return $this->concatenateWhereClauses($query, $sql);
         }
@@ -368,7 +368,7 @@ compileColumns执行完后compileComponents里的变量$sql的值会变成`['col
     protected function compileWheresToArray($query)
     {
         return collect($query->wheres)->map(function ($where) use ($query) {
-        	//对于我们的例子来说是 'and ' . $this->whereBasic($query, $where)  
+            //对于我们的例子来说是 'and ' . $this->whereBasic($query, $where)  
             return $where['boolean'].' '.$this->{"where{$where['type']}"}($query, $where);
         })->all();
     }
@@ -407,7 +407,7 @@ whereBasic的返回为字符串`'where name = ?'`, compileWheresToArray方法的
     protected function concatenateWhereClauses($query, $sql)
     {
         $conjunction = $query instanceof JoinClause ? 'on' : 'where';
-		//removeLeadingBoolean 会去掉SQL里首个where条件前面的逻辑运算符(and 或者 or)
+        //removeLeadingBoolean 会去掉SQL里首个where条件前面的逻辑运算符(and 或者 or)
         return $conjunction.' '.$this->removeLeadingBoolean(implode(' ', $sql));
     }
 所以编译完`from`和`wheres`部分后compileComponents方法里返回的$sql的值会变成
@@ -461,12 +461,12 @@ whereBasic的返回为字符串`'where name = ?'`, compileWheresToArray方法的
         try {
             $result = $this->runQueryCallback($query, $bindings, $callback);
         } catch (QueryException $e) {
-        	//捕获到QueryException试着重连数据库再执行一次SQL
+            //捕获到QueryException试着重连数据库再执行一次SQL
             $result = $this->handleQueryException(
                 $e, $query, $bindings, $callback
             );
         }
-		//记录SQL执行的细节
+        //记录SQL执行的细节
         $this->logQuery(
             $query, $bindings, $this->getElapsedTime($start)
         );
@@ -554,8 +554,8 @@ processor是用来对SQL执行结果进行后置处理的，默认的processor�
 
 到这里QueryBuilder大体的流程就梳理完了，虽然我们只看了select一种操作但其实其他的update、insert、delete也是一样先由QueryBuilder编译完成SQL最后由Connection实例去执行然后返回结果，在编译的过程中QueryBuilder也会帮助我们进行防SQL注入。
 
-上一篇: [Database 基础介绍](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/Database1.md)
+上一篇: [Database 基础介绍](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/Database1.md)
 
-下一篇: [Database 模型CRUD](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/aritcles/Database3.md)
+下一篇: [Database 模型CRUD](https://github.com/kevinyan815/Learning_Laravel_Kernel/blob/master/articles/Database3.md)
 
 
